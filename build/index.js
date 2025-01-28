@@ -13,59 +13,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const server_1 = require("@apollo/server");
 const express4_1 = require("@apollo/server/express4");
-// import { Prisma, PrismaClient } from '@prisma/client';
-const db_1 = require("./lib/db");
-// Define resolvers to match the schema
-const resolvers = {
-    Query: {
-        hello: () => 'Hello, world!', // Sample resolver for the 'hello' query
-    },
-};
+const index_1 = __importDefault(require("./graphql/index"));
 function init() {
     return __awaiter(this, void 0, void 0, function* () {
         const app = (0, express_1.default)();
         const PORT = Number(process.env.PORT) || 8000;
         app.use(express_1.default.json());
-        const gqlServer = new server_1.ApolloServer({
-            typeDefs: `
-        type Query {
-            hello: String 
-            say(name:String):String
-        } 
-
-        type Mutation{
-            createUser(firstName:String!,lastName:String!,email:String!,password:String!):Boolean
-        }
-        `, //Schema
-            resolvers: {
-                Query: {
-                    hello: () => `hey there i am a graphql server`,
-                    say: (_, { name }) => `Heyy ${name},How are you ? `
-                },
-                Mutation: {
-                    createUser: (_1, _a) => __awaiter(this, [_1, _a], void 0, function* (_, { firstName, lastName, email, password }) {
-                        yield db_1.prismaClient.user.create({
-                            data: {
-                                email,
-                                firstName,
-                                lastName,
-                                password,
-                                salt: 'random salt'
-                            }
-                        });
-                        return true;
-                    })
-                }
-            }, //Resolvers 
-        });
-        // Start the gql server
-        yield gqlServer.start();
         app.get('/', (req, res) => {
             res.json({ message: 'Server is up and running' });
         });
-        app.use("/graphql", (0, express4_1.expressMiddleware)(gqlServer));
+        // const gqlServer =await createApolloGraphQlServer();
+        app.use("/graphql", (0, express4_1.expressMiddleware)(yield (0, index_1.default)()));
         // Create GraphQl server
         app.listen(PORT, () => console.log(`Server started at PORT : ${PORT}`));
     });
